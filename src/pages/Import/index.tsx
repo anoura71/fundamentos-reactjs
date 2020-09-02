@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
-
 import filesize from 'filesize';
 
 import Header from '../../components/Header';
@@ -12,37 +11,63 @@ import { Container, Title, ImportFileContainer, Footer } from './styles';
 import alert from '../../assets/alert.svg';
 import api from '../../services/api';
 
+
 interface FileProps {
   file: File;
   name: string;
   readableSize: string;
 }
 
+
 const Import: React.FC = () => {
+
+
   const [uploadedFiles, setUploadedFiles] = useState<FileProps[]>([]);
   const history = useHistory();
 
+
+  /** Enviar o arquivo com os dados para upload. */
   async function handleUpload(): Promise<void> {
-    // const data = new FormData();
 
-    // TODO
+    const data = new FormData();
 
+    // Se não tiver nenhum arquivo, interrompe a execução do upload
+    if (!uploadedFiles.length) {
+      return;
+    }
+
+    // Envia o arquivo e realiza as operações de inserção (no backend)
+    const uploadedFile = uploadedFiles[0];
+    data.append('file', uploadedFile.file, uploadedFile.name);
     try {
-      // await api.post('/transactions/import', data);
+      await api.post('/transactions/import', data);
+      history.push('/');
     } catch (err) {
-      // console.log(err.response.error);
+      console.log(err.response.error);
     }
   }
 
+
+  /** Tratar o carregamento do arquivo no componente de upload. */
   function submitFile(files: File[]): void {
-    // TODO
+
+    const submittedFiles = files.map(file => ({
+      file,
+      name: file.name,
+      readableSize: filesize(file.size),
+    }));
+
+    setUploadedFiles(submittedFiles);
   }
+
 
   return (
     <>
       <Header size="small" />
+
       <Container>
         <Title>Importar uma transação</Title>
+
         <ImportFileContainer>
           <Upload onUpload={submitFile} />
           {!!uploadedFiles.length && <FileList files={uploadedFiles} />}
@@ -52,6 +77,7 @@ const Import: React.FC = () => {
               <img src={alert} alt="Alert" />
               Permitido apenas arquivos CSV
             </p>
+
             <button onClick={handleUpload} type="button">
               Enviar
             </button>
@@ -60,6 +86,9 @@ const Import: React.FC = () => {
       </Container>
     </>
   );
+
+
 };
+
 
 export default Import;
